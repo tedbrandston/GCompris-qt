@@ -5,7 +5,7 @@
  *   SPDX-License-Identifier: GPL-3.0-or-later
  */
 
-.import "qrc:/gcompris/src/activities/memory/math_util.js" as Memory
+.import "../../..//memory/math_util.js" as Memory
 
 var memory_cards = [
             { // Level 1
