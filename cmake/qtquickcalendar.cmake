@@ -47,6 +47,12 @@ if(ANDROID AND Qt5Widgets_VERSION VERSION_GREATER_EQUAL "5.14.0")
   set(EXTRA_INSTALL_ANDROID_CALENDAR ${CMAKE_COMMAND} -E make_directory ${CMAKE_LIBRARY_OUTPUT_DIRECTORY} && ${CMAKE_COMMAND} -E copy ${_calendar_library_dir}${_calendar_library_file} ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libqtquickcalendarplugin_${ANDROID_ABI}.so && )
 endif()
 
+# for visual studio, we need to create a vcxproj
+if(WIN32 AND NOT MINGW)
+  set(_qmake_options -spec win32-msvc -tp vc)
+else()
+  set(_qmake_options "")
+endif()
 # Ninja is not supported by qmake.
 # In case Ninja is set as generator, use make on Linux, nmake on Windows
 if(${CMAKE_GENERATOR} MATCHES "Ninja")
