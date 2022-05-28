@@ -48,6 +48,8 @@ if(ECM_FOUND)
   include(ECMCoverageOption)
 endif()
 
+add_compile_definitions(QT_DISABLE_DEPRECATED_BEFORE=0x050F00)
+
 # add tools (cppcheck, clang-tidy...) if build on testing mode only
 # (slower compilation)
 if(BUILD_TESTING)
@@ -99,19 +101,29 @@ if("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
             directory and create a build directory and call \"${CMAKE_COMMAND} <path to the sources>\".")
 endif()
 
-find_package(Qt5 ${QT_REQUIRED_VERSION} REQUIRED
-    Qml Quick Gui Multimedia Core Svg LinguistTools Sensors QuickControls2 QuickTemplates2)
-
-if(Qt5Widgets_VERSION VERSION_GREATER_EQUAL "5.15.0")
-  find_package(Qt5 ${QT_REQUIRED_VERSION} REQUIRED QmlWorkerScript QuickParticles)
+find_package(Qt6 COMPONENTS Widgets QUIET)
+set(QT_MAJOR Qt6)
+if (NOT Qt6_FOUND)
+  set(QT_MAJOR Qt5)
 endif()
 
+find_package(${QT_MAJOR} ${QT_REQUIRED_VERSION} REQUIRED
+    Qml Quick Gui Multimedia Core Svg LinguistTools Sensors QuickControls2 QuickTemplates2 Core5Compat)
+
+if(${QT_MAJOR}Widgets_VERSION VERSION_GREATER_EQUAL "5.15.0")
+  find_package(${QT_MAJOR} ${QT_REQUIRED_VERSION} REQUIRED QmlWorkerScript)
+  if(${QT_MAJOR}Widgets_VERSION VERSION_LESS "6.0.0")
+    find_package(${QT_MAJOR} ${QT_REQUIRED_VERSION} REQUIRED QuickParticles)
+  endif()
+endif()
+
+
 if(ANDROID)
-    find_package(Qt5 ${QT_REQUIRED_VERSION} REQUIRED AndroidExtras)
+    find_package(${QT_MAJOR} ${QT_REQUIRED_VERSION} REQUIRED AndroidExtras)
 endif()
 
 if(SAILFISHOS)
-    find_package(Qt5 ${QT_REQUIRED_VERSION} REQUIRED Widgets)
+    find_package(${QT_MAJOR} ${QT_REQUIRED_VERSION} REQUIRED Widgets)
 endif()
 
 ## For now we workaround CMAKE_ANDROID_NDK_TOOLCHAIN_VERSION to clang with a command variable, so not needed
@@ -170,7 +182,7 @@ else()
 endif()
 if(ANDROID)
   # Android .so output
-  if(Qt5Widgets_VERSION VERSION_LESS "5.14.0")
+  if(${QT_MAJOR}Widgets_VERSION VERSION_LESS "5.14.0")
     set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/android-build/libs/${ANDROID_ABI}/)
   endif()
   set(GCOMPRIS_TRANSLATIONS_DIR ${CMAKE_BINARY_DIR}/${_data_dest_dir} CACHE INTERNAL "" FORCE)
@@ -235,9 +247,9 @@ foreach(PoSource ${TRANSLATIONS_FILES})
     # Remove the obsolete translations and set po in the ts output file
     COMMAND msgattrib --no-obsolete  ${CMAKE_CURRENT_SOURCE_DIR}/${PoSource} -o ${OutTsFile}
     # Convert the po into ts
-    COMMAND Qt5::lconvert -if po -of ts -i ${OutTsFile} -o ${OutTsFile}
+    COMMAND ${QT_MAJOR}::lconvert -if po -of ts -i ${OutTsFile} -o ${OutTsFile}
     # Convert the ts in qm removing non finished translations
-    COMMAND Qt5::lrelease -compress -nounfinished ${OutTsFile} -qm ${GCOMPRIS_TRANSLATIONS_DIR}/${QmOutput}
+    COMMAND ${QT_MAJOR}::lrelease -compress -nounfinished ${OutTsFile} -qm ${GCOMPRIS_TRANSLATIONS_DIR}/${QmOutput}
     )
   list(APPEND QM_FILES ${QmOutput})
 endforeach()
